@@ -38,6 +38,7 @@
                 </div>
             </div>
             <div class="card-body">
+                <!-- Responsive datatable doesn't work -->
                 <table class="table table-sm table-borderless table-hover table-striped" id="categories-table">
                     <thead>
                         <tr>
