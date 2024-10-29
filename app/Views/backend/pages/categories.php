@@ -38,14 +38,13 @@
                 </div>
             </div>
             <div class="card-body">
-                <!-- Responsive datatable doesn't work -->
                 <table class="table table-sm table-borderless table-hover table-striped" id="categories-table">
                     <thead>
                         <tr>
-                            <th scope="col">#</th>
+                            <th scope="col" width="4%">#</th>
                             <th scope="col">Category name</th>
                             <th scope="col">N° of subcategories</th>
-                            <th scope="col">Action</th>
+                            <th scope="col" width="12%">Action</th>
                             <th scope="col">Ordering</th>
                         </tr>
                     </thead>
@@ -106,17 +105,17 @@
 <?= $this->section('stylesheets') ?>
 
 <link rel="stylesheet" href="/backend/src/plugins/datatables/css/dataTables.bootstrap4.min.css">
-<link rel="stylesheet" href="/backend/src/plugins/datatables/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" href="/backend/src/plugins/datatables/css/responsive.bootstrap4.default.min.css">
 
 <?= $this->endSection() ?>
 
 
 <?= $this->section('scripts') ?>
 
-<script src="/backend/src/plugins/datatables/js/jquery.dataTables.min.js"></script>
-<script src="/backend/src/plugins/datatables/js/dataTables.bootstrap4.min.js"></script>
-<script src="/backend/src/plugins/datatables/js/dataTables.responsive.min.js"></script>
-<script src="/backend/src/plugins/datatables/js/responsive.bootstrap4.min.js"></script>
+<script src="/backend/src/plugins/datatables/js/dataTables.default.min.js"></script>
+<script src="/backend/src/plugins/datatables/js/dataTables.bootstrap4.default.min.js"></script>
+<script src="/backend/src/plugins/datatables/js/dataTables.responsive.default.min.js"></script>
+<script src="/backend/src/plugins/datatables/js/responsive.bootstrap4.default.min.js"></script>
 
 <script>
     $(document).on('click', '#add_category_btn', function (e) {
@@ -180,9 +179,15 @@
     var categories_DT = $('#categories-table').DataTable({
         processing: true,
         serverSide: true,
+        responsive: true,
         ajax: "<?= route_to('get-categories') ?>",
-        dom: "Brtip",
         info: true,
+        layout: {
+            topStart: null,
+            topEnd: null,
+            bottomStart: 'info',
+            bottomEnd: 'paging'
+        },
         fnCreatedRow: function (row, data, index) {
             $('td', row).eq(0).html(index + 1);
         },
@@ -191,6 +196,18 @@
             { visible: false, targets: 4 }
         ],
         order: [[4, 'asc']]
+    });
+
+    
+    // Retrieve subcategories
+    $('#subcategories-table').DataTable({
+        responsive: true,
+        layout: {
+            topStart: null,
+            topEnd: null,
+            bottomStart: 'info',
+            bottomEnd: 'paging'
+        },
     });
 </script>
 
