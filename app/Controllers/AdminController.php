@@ -474,4 +474,50 @@ class AdminController extends BaseController
         );
     }
 
+    public function getCategory() 
+    {
+        $request = \Config\Services::request();
+
+        if ( $request->isAJAX() ) {
+            $id = $request->getVar('category_id');
+            $category = new Category();
+            $category_data = $category->find($id);
+            return $this->response->setJSON(['data' => $category_data]);
+        }
+    }
+
+    public function updateCategory()
+    {
+        $request = \Config\Services::request();
+
+        if ( $request->isAJAX() ) {
+            $id = $request->getVar('category_id');
+            $validation = \Config\Services::validation();
+
+            $this->validate([
+                'category_name' => [
+                    'rules' => 'required|is_unique[categories.name,id,' . $id . ']',
+                    'errors' => [
+                        'required' => 'Category name is required.',
+                        'is_unique' => 'Category name already exists.'
+                    ]
+                ]
+            ]);
+        }
+
+        if ( $validation->run() == FALSE ) {
+            $errors = $validation->getErrors();
+            return $this->response->setJSON(['status' => 0, 'token' => csrf_hash(), 'error' => $errors]);
+        } else {
+            $category = new Category();
+            $update = $category->where('id', $id)->set(['name'=>$request->getVar('category_name')])->update();
+
+            if ( $update ) {
+                return $this->response->setJSON(['status' => 1, 'token' => csrf_hash(), 'msg' => 'Category has been successfully updated.']);
+            } else {
+                return $this->response->setJSON(['status' => 0, 'token' => csrf_hash(), 'msg' => 'Something went wrong.']);
+            }
+        }
+    }
+
 }
