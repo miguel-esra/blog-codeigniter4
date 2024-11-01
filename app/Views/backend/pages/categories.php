@@ -261,6 +261,35 @@
     });
 
 
+    $(document).on('click', '.deleteCategoryBtn', function (e) {
+        e.preventDefault();
+        var category_id = $(this).data('id');
+        var url = "<?= route_to('delete-category') ?>";
+        swal.fire({
+            title: 'Are you sure?',
+            html: 'Do you want to delete this category?',
+            showCloseButton: true,
+            showCancelButton: true,
+            cancelButtonText: 'Cancel',
+            confirmButtonText: 'Yes, delete',
+            cancelButtonColor: '#D33',
+            confirmButtonColor: '#3085D6',
+            width: 360,
+            allowOutsideClick: false
+        }).then(function (result) {
+            if (result.value) {
+                $.get(url, { category_id: category_id }, function (response) {
+                    if ( response.status == 1) {
+                        categories_DT.ajax.reload(null, false);
+                        toastr.success(response.msg);
+                    } else {
+                        toastr.error(response.msg);
+                    }
+                }, 'json');
+            }
+        });
+    });
+
     // Retrieve subcategories
     $('#subcategories-table').DataTable({
         responsive: true,
