@@ -107,6 +107,9 @@
 
 <link rel="stylesheet" href="/backend/src/plugins/datatables/css/dataTables.bootstrap4.min.css">
 <link rel="stylesheet" href="/backend/src/plugins/datatables/css/responsive.bootstrap4.default.min.css">
+<link rel="stylesheet" href="/extra-assets/jquery-ui-1.14.1/jquery-ui.min.css">
+<link rel="stylesheet" href="/extra-assets/jquery-ui-1.14.1/jquery-ui.structure.min.css">
+<link rel="stylesheet" href="/extra-assets/jquery-ui-1.14.1/jquery-ui.theme.min.css">
 
 <?= $this->endSection() ?>
 
@@ -117,6 +120,7 @@
 <script src="/backend/src/plugins/datatables/js/dataTables.bootstrap4.default.min.js"></script>
 <script src="/backend/src/plugins/datatables/js/dataTables.responsive.default.min.js"></script>
 <script src="/backend/src/plugins/datatables/js/responsive.bootstrap4.default.min.js"></script>
+<script src="/extra-assets/jquery-ui-1.14.1/jquery-ui.min.js"></script>
 
 <script>
     $(document).on('click', '#add_category_btn', function (e) {
@@ -190,7 +194,11 @@
             bottomEnd: 'paging'
         },
         fnCreatedRow: function (row, data, index) {
-            $('td', row).eq(0).html(index + 1);
+            var api = this.api();
+            var page = api.page();
+            $('td', row).eq(0).html(page * 10 + index + 1);
+            $('td', row).parent().attr('data-index', data[0]).attr('data-ordering', data[4]);
+            // console.log(data);
         },
         columnDefs: [
             { orderable: false, targets: [0,1,2,3] },
@@ -289,6 +297,37 @@
             }
         });
     });
+
+
+    // Ordering categories
+    $('table#categories-table').find('tbody').sortable({
+        update: function (event, ui) {
+            $(this).children().each( function (index) {
+                var api = categories_DT;
+                var page = api.page();
+                if ( $(this).attr('data-ordering') != (page * 10 + index + 1) ) {
+                    $(this).attr('data-ordering', (page * 10 + index + 1)).addClass('updated');
+                }
+            });
+            var positions = [];
+
+            $('.updated').each(function () {
+                positions.push([$(this).attr('data-index'), $(this).attr('data-ordering')]);
+                $(this).removeClass('updated');
+            });
+
+            // console.log(positions);
+
+            var url = "<?= route_to('reorder-categories') ?>";
+            $.get(url, { positions: positions }, function (response) {
+                if ( response.status == 1) {
+                    categories_DT.ajax.reload(null, false);
+                    toastr.success(response.msg);
+                }
+            }, 'json');
+        }
+    });
+
 
     // Retrieve subcategories
     $('#subcategories-table').DataTable({
