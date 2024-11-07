@@ -99,6 +99,7 @@
 
 <?php include('modals/category-modal-form.php') ?>
 <?php include('modals/edit-category-modal-form.php') ?>
+<?php include('modals/subcategory-modal-form.php') ?>
 
 <?= $this->endSection() ?>
 
@@ -339,6 +340,71 @@
             bottomEnd: 'paging'
         },
     });
+
+
+    $(document).on('click', '#add_subcategory_btn', function (e) {
+        e.preventDefault();
+        var modal_title = 'Add Subcategory';
+        var modal_btn_text = 'Add';
+        var modal = $('body').find('div#subcategory-modal');
+        var select = modal.find('select[name="parent_cat"]');
+        var url = "<?= route_to('get-parent-categories') ?>";
+        $.getJSON(url, { parent_category_id:null }, function (response) {
+            select.find('option').remove();
+            select.html(response.data);
+        });
+        modal.find('.modal-title').html(modal_title);
+        modal.find('.modal-footer > button.action').html(modal_btn_text);
+        modal.find('input[type="text"]').val('');
+        modal.find('textarea').html('');
+        modal.find('span.error-text').html('');
+        modal.modal('show');
+    });
+
+
+    $(document).on('submit', '#add_subcategory_form', function (e) {
+        e.preventDefault();
+        // CSRF
+        var csrfName = $('.ci_csrf_data').attr('name');      // CSRF token name
+        var csrfHash = $('.ci_csrf_data').val();     // CSRF hash
+        var form = this;
+        var modal = $('body').find('div#subcategory-modal')
+        var formdata = new FormData(form);
+            formdata.append(csrfName, csrfHash);
+
+        $.ajax({
+            url: $(form).attr('action'),
+            method: $(form).attr('method'),
+            data: formdata,
+            processData: false,
+            dataType: 'json',
+            contentType: false,
+            cache: false,
+            beforeSend: function () {
+                toastr.remove();
+                $(form).find('span.error-text').text('');
+            },
+            success: function (response) {
+                // Update CSRF hash
+                $('.ci_csrf_data').val(response.token);
+
+                if ( $.isEmptyObject(response.error) ) {
+                    if ( response.status == 1 ) {
+                        $(form)[0].reset();
+                        modal.modal('hide');
+                        toastr.success(response.msg);
+                    } else {
+                        toastr.error(response.msg);
+                    }
+                } else {
+                    $.each(response.error, function (prefix, val) {
+                        $(form).find('span.' + prefix + '_error').text(val);
+                    });
+                }
+            }
+        }); 
+    });
+
 </script>
 
 <?= $this->endSection() ?>

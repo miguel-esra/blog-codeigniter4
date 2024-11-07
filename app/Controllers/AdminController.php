@@ -12,6 +12,8 @@ use App\Models\Setting;
 use App\Models\SocialMedia;
 use App\Models\Category;
 use SSP;
+use SawaStacks\CodeIgniter\Slugify;
+use App\Models\Subcategory;
 
 class AdminController extends BaseController
 {
@@ -556,6 +558,74 @@ class AdminController extends BaseController
                 $category->where('id', $index)->set(['ordering' => $newPosition])->update();
             }
             return $this->response->setJSON(['status' => 1, 'msg' => 'Categories ordering has been successfully updated.']);
+        }
+    }
+
+    public function getParentCategories()
+    {
+        $request = \Config\Services::request();
+
+        if ( $request->isAJAX() ) {
+            $id = $request->getVar('parent_category_id');
+            $options = '<option value="0">Uncategorized</option>';
+            $category = new Category();
+            $parent_categories = $category->findAll();
+
+            if ( count($parent_categories) ) {
+                $added_options = '';
+                foreach ($parent_categories as $parent_category) {
+                    $isSelected = $parent_category['id'] == $id ? 'selected' : '';
+                    $added_options.='<option value="' . $parent_category['id'] . '" ' . $isSelected . '>' . $parent_category['name'] . '</option>';
+                }
+                $options = $options . $added_options;
+                return $this->response->setJSON(['status' => 1, 'data' => $options]);
+            } else {
+                return $this->response->setJSON(['status' => 1, 'data' => $options]);
+            }
+        }
+    }
+
+    public function addSubcategory()
+    {
+        $request = \Config\Services::request();
+
+        if ( $request->isAJAX() ) {
+            $validation = \Config\Services:: validation();
+
+            $this->validate([
+                'subcategory_name' => [
+                    'rules' => 'required|is_unique[subcategories.name]',
+                    'errors' => [
+                        'required' => 'Subcategory name is required.',
+                        'is_unique' => 'Subcategory name already exists.'
+                    ]
+                ]
+            ]);
+
+            if ( $validation->run() == FALSE ) {
+                $errors = $validation->getErrors();
+                return $this->response->setJSON(['status' => 1, 'token' => csrf_hash(), 'error' => $errors]);
+            } else {
+                $subcategory = new Subcategory();
+                $subcategory_name = $request->getVar('subcategory_name');
+                $subcategory_description = $request->getVar('description');
+                $subcategory_parent_category = $request->getVar('parent_cat');
+                $subcategory_slug = Slugify::model(Subcategory::class)->make($subcategory_name);
+
+                $save = $subcategory->save([
+                    'name' => $subcategory_name,
+                    'parent_cat' => $subcategory_parent_category,
+                    'slug' => $subcategory_slug,
+                    'description' => $subcategory_description
+                ]);
+
+                if ( $save ) {
+                    return $this->response->setJSON(['status' => 1, 'token' => csrf_hash(), 'msg' => 'New subcategory has been added.']);
+                } else {
+                    return $this->response->setJSON(['status' => 0, 'token' => csrf_hash(), 'msg' => 'Something went wrong.']);
+                }
+                
+            }
         }
     }
 
