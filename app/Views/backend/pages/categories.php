@@ -74,21 +74,16 @@
                 <table class="table table-sm table-borderless table-hover table-striped" id="subcategories-table">
                     <thead>
                         <tr>
-                            <th scope="col">#</th>
+                            <th scope="col" width="4%">#</th>
                             <th scope="col">Subcategory name</th>
                             <th scope="col">Parent category</th>
                             <th scope="col">N° of posts</th>
-                            <th scope="col">Action</th>
+                            <th scope="col" width="12%">Action</th>
+                            <th scope="col">Ordering</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td scope="row">1</td>
-                            <td>---</td>
-                            <td>---</td>
-                            <td>---</td>
-                            <td>---</td>
-                        </tr>
+                        
                     </tbody>
                 </table>
             </div>
@@ -168,6 +163,7 @@
                         modal.modal('hide');
                         toastr.success(response.msg);
                         categories_DT.ajax.reload(null, false);     // Update datatable
+                        subcategories_DT.ajax.reload(null, false);
                     } else {
                         toastr.error(response.msg);
                     }
@@ -257,6 +253,7 @@
                         modal.modal('hide');
                         toastr.success(response.msg);
                         categories_DT.ajax.reload(null, false);     // Update datatable
+                        subcategories_DT.ajax.reload(null, false);
                     } else {
                         toastr.error(response.msg);
                     }
@@ -290,6 +287,7 @@
                 $.get(url, { category_id: category_id }, function (response) {
                     if ( response.status == 1) {
                         categories_DT.ajax.reload(null, false);
+                        subcategories_DT.ajax.reload(null, false);
                         toastr.success(response.msg);
                     } else {
                         toastr.error(response.msg);
@@ -327,18 +325,6 @@
                 }
             }, 'json');
         }
-    });
-
-
-    // Retrieve subcategories
-    $('#subcategories-table').DataTable({
-        responsive: true,
-        layout: {
-            topStart: null,
-            topEnd: null,
-            bottomStart: 'info',
-            bottomEnd: 'paging'
-        },
     });
 
 
@@ -393,6 +379,7 @@
                         $(form)[0].reset();
                         modal.modal('hide');
                         toastr.success(response.msg);
+                        subcategories_DT.ajax.reload(null, false);
                     } else {
                         toastr.error(response.msg);
                     }
@@ -403,6 +390,34 @@
                 }
             }
         }); 
+    });
+
+
+    // Retrieve subcategories
+    var subcategories_DT = $('#subcategories-table').DataTable({
+        processing: true,
+        serverSide: true,
+        responsive: true,
+        ajax: "<?= route_to('get-subcategories') ?>",
+        info: true,
+        layout: {
+            topStart: null,
+            topEnd: null,
+            bottomStart: 'info',
+            bottomEnd: 'paging'
+        },
+        fnCreatedRow: function (row, data, index) {
+            var api = this.api();
+            var page = api.page();
+            $('td', row).eq(0).html(page * 10 + index + 1);
+            $('td', row).parent().attr('data-index', data[0]).attr('data-ordering', data[5]);
+            // console.log(data);
+        },
+        columnDefs: [
+            { orderable: false, targets: [0,1,2,3,4] },
+            { visible: false, targets: 5 }
+        ],
+        order: [[5, 'asc']]
     });
 
 </script>
