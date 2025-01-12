@@ -95,6 +95,7 @@
 <?php include('modals/category-modal-form.php') ?>
 <?php include('modals/edit-category-modal-form.php') ?>
 <?php include('modals/subcategory-modal-form.php') ?>
+<?php include('modals/edit-subcategory-modal-form.php') ?>
 
 <?= $this->endSection() ?>
 
@@ -418,6 +419,80 @@
             { visible: false, targets: 5 }
         ],
         order: [[5, 'asc']]
+    });
+
+
+    $(document).on('click', '.editSubcategoryBtn', function (e) {
+        e.preventDefault();
+        var subcategory_id = $(this).data('id');
+        var get_subcategory_url = "<?= route_to('get-subcategory') ?>";
+        var get_parent_categories_url = "<?= route_to('get-parent-categories') ?>";
+        var modal_title = 'Edit Subcategory';
+        var modal_btn_text = 'Save changes';
+        var modal = $('body').find('div#edit-subcategory-modal');
+
+        modal.find('.modal-title').html(modal_title);
+        modal.find('.modal-footer > button.action').html(modal_btn_text);
+        modal.find('span.error-text').html('');
+
+        var select = modal.find('select[name="parent_cat"]');
+
+        $.getJSON(get_subcategory_url, { subcategory_id:subcategory_id }, function (response) {
+            modal.find('input[type="text"][name="subcategory_name"]').val(response.data.name);
+            modal.find('form').find('input[type="hidden"][name="subcategory_id"]').val(response.data.id);
+            modal.find('form').find('textarea[name="description"]').val(response.data.description);
+
+            $.getJSON(get_parent_categories_url, { parent_category_id:response.data.parent_cat }, function (response) {
+                select.find('option').remove();
+                select.html(response.data);
+            });
+
+            modal.modal('show');
+        });
+    });
+
+
+    $('#update_subcategory_form').on('submit', function (e) {
+        e.preventDefault();
+        // CSRF
+        var csrfName = $('.ci_csrf_data').attr('name');      // CSRF token name
+        var csrfHash = $('.ci_csrf_data').val();     // CSRF hash
+        var form = this;
+        var modal = $('body').find('div#edit-subcategory-modal')
+        var formdata = new FormData(form);
+            formdata.append(csrfName, csrfHash);
+
+        $.ajax({
+            url: $(form).attr('action'),
+            method: $(form).attr('method'),
+            data: formdata,
+            processData: false,
+            dataType: 'json',
+            contentType: false,
+            cache: false,
+            beforeSend: function () {
+                toastr.remove();
+                $(form).find('span.error-text').text('');
+            },
+            success: function (response) {
+                // Update CSRF hash
+                $('.ci_csrf_data').val(response.token);
+
+                if ( $.isEmptyObject(response.error) ) {
+                    if ( response.status == 1 ) {
+                        modal.modal('hide');
+                        toastr.success(response.msg);
+                        subcategories_DT.ajax.reload(null, false);
+                    } else {
+                        toastr.error(response.msg);
+                    }
+                } else {
+                    $.each(response.error, function (prefix, val) {
+                        $(form).find('span.' + prefix + '_error').text(val);
+                    });
+                }
+            }
+        }); 
     });
 
 </script>

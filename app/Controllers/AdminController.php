@@ -658,7 +658,7 @@ class AdminController extends BaseController
                 "dt" => 2,
                 "formatter" => function ($d, $row) use ($category, $subcategory) {
                     $parent_cat_id = $subcategory->asObject()->where("id", $row['id'])->first()->parent_cat;
-                    $parent_cat_name = ' - ';
+                    $parent_cat_name = ' --- ';
                     if ( $parent_cat_id != 0) {
                         $parent_cat_name = $category->asObject()->where("id", $parent_cat_id)->first()->name;
                     }
@@ -677,8 +677,8 @@ class AdminController extends BaseController
                 "dt" => 4,
                 "formatter" => function ($d, $row) {
                     return "<div class='btn-group'>
-                                <button class='btn btn-sm btn-link p-0 mx-1 editSubcategoryBtn' data='" . $row['id'] . "'>Edit</button>
-                                <button class='btn btn-sm btn-link p-0 mx-1 deleteSubcategoryBtn' data='" . $row['id'] . "'>Delete</button>
+                                <button class='btn btn-sm btn-link p-0 mx-1 editSubcategoryBtn' data-id='" . $row['id'] . "'>Edit</button>
+                                <button class='btn btn-sm btn-link p-0 mx-1 deleteSubcategoryBtn' data-id='" . $row['id'] . "'>Delete</button>
                             </div>";
                 }
             ),
@@ -691,6 +691,57 @@ class AdminController extends BaseController
         return json_encode(
             SSP::simple($_GET, $dbDetails, $table, $primaryKey, $columns)
         );
+    }
+
+    public function getSubcategory()
+    {
+        $request = \Config\Services::request();
+
+        if ( $request->isAJAX() ) {
+            $id = $request->getVar('subcategory_id');
+            $subcategory = new Subcategory();
+            $subcategory_data = $subcategory->find($id);
+            return $this->response->setJSON(['data' => $subcategory_data]);
+        }
+    }
+
+    public function updateSubcategory()
+    {
+        $request = \Config\Services::request();
+
+        if ( $request->isAJAX() ) {
+            $id = $request->getVar('subcategory_id');
+            $validation = \Config\Services::validation();
+
+            $this->validate([
+                'subcategory_name' => [
+                    'rules' => 'required|is_unique[subcategories.name,id,' . $id . ']',
+                    'errors' => [
+                        'required' => 'Subcategory name is required.',
+                        'is_unique' => 'Subcategory name already exists.'
+                    ]
+                ]
+            ]);
+
+            if ( $validation->run() == FALSE ) {
+                $errors = $validation->getErrors();
+                return $this->response->setJSON(['status' => 0, 'token' => csrf_hash(), 'error' => $errors]);
+            } else {
+                $subcategory = new Subcategory();
+                $data = array(
+                    'name' => $request->getVar('subcategory_name'),
+                    'parent_cat' => $request->getVar('parent_cat'),
+                    'description' => $request->getVar('description')
+                );
+                $update = $subcategory->update($id, $data);
+
+                if ( $update ) {
+                    return $this->response->setJSON(['status' => 1, 'token' => csrf_hash(), 'msg' => 'Subcategory has been successfully updated.']);
+                } else {
+                    return $this->response->setJSON(['status' => 0, 'token' => csrf_hash(), 'msg' => 'Something went wrong.']);
+                }
+            }
+        }
     }
 
 }
