@@ -452,7 +452,10 @@ class AdminController extends BaseController
                 "db" => "id",
                 "dt" => 2,
                 "formatter" => function ($d, $row) {
-                    return "(x) will be added later.";
+                    // return "(x) will be added later.";
+                    $subcategory = new Subcategory();
+                    $subcategories = $subcategory->where(['parent_cat' => $row['id']])->findAll();
+                    return count($subcategories);
                 }
             ),
             array(
@@ -740,6 +743,45 @@ class AdminController extends BaseController
                 } else {
                     return $this->response->setJSON(['status' => 0, 'token' => csrf_hash(), 'msg' => 'Something went wrong.']);
                 }
+            }
+        }
+    }
+
+    public function reorderSubcategories()
+    {
+        $request = \Config\Services::request();
+
+        if ( $request->isAJAX() ) {
+            $positions = $request->getVar('positions');
+            $subcategory = new Subcategory();
+
+            foreach ($positions as $position) {
+                $index = $position[0];
+                $newPosition = $position[1];
+                $subcategory->where('id', $index)->set(['ordering' => $newPosition])->update();
+            }
+
+            return $this->response->setJSON(['status' => 1, 'msg' => 'Subcategories ordering has been successfully updated.']);
+        }
+    }
+
+    public function deleteSubcategory()
+    {
+        $request = \Config\Services::request();
+
+        if ( $request->isAJAX() ) {
+            $id = $request->getVar('subcategory_id');
+            $subcategory = new Subcategory();
+
+            // Check related posts
+
+            // Delete subcategory
+            $delete = $subcategory->delete($id);
+
+            if ( $delete ) {
+                return $this->response->setJSON(['status' => 1, 'msg' => 'Subcategory has been successfully deleted.']);
+            } else {
+                return $this->response->setJSON(['status' => 0, 'msg' => 'Something went wrong.']);
             }
         }
     }

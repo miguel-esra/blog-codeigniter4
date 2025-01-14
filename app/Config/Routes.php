@@ -36,6 +36,8 @@ $routes->group('admin', static function($routes){
         $routes->get('get-subcategories', 'AdminController::getSubcategories', ['as' => 'get-subcategories']);
         $routes->get('get-subcategory', 'AdminController::getSubcategory', ['as' => 'get-subcategory']);
         $routes->post('update-subcategory', 'AdminController::updateSubcategory', ['as' => 'update-subcategory']);
+        $routes->get('reorder-subcategories', 'AdminController::reorderSubcategories', ['as' => 'reorder-subcategories']);
+        $routes->get('delete-subcategory', 'AdminController::deleteSubcategory', ['as' => 'delete-subcategory']);
     });
 
     $routes->group('', ['filter' => 'cifilter:guest'], static function($routes){

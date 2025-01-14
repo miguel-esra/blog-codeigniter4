@@ -381,6 +381,7 @@
                         modal.modal('hide');
                         toastr.success(response.msg);
                         subcategories_DT.ajax.reload(null, false);
+                        categories_DT.ajax.reload(null, false);
                     } else {
                         toastr.error(response.msg);
                     }
@@ -483,6 +484,7 @@
                         modal.modal('hide');
                         toastr.success(response.msg);
                         subcategories_DT.ajax.reload(null, false);
+                        categories_DT.ajax.reload(null, false);
                     } else {
                         toastr.error(response.msg);
                     }
@@ -493,6 +495,68 @@
                 }
             }
         }); 
+    });
+
+
+    // Reorder subcategories
+    $('table#subcategories-table').find('tbody').sortable({
+        update: function (event, ui) {
+            $(this).children().each( function (index) {
+                var api = subcategories_DT;
+                var page = api.page();
+                if ( $(this).attr('data-ordering') != (page * 10 + index + 1) ) {
+                    $(this).attr('data-ordering', (page * 10 + index + 1)).addClass('updated');
+                }
+            });
+            var positions = [];
+
+            $('.updated').each( function () {
+                positions.push([$(this).attr('data-index'), $(this).attr('data-ordering')]);
+                $(this).removeClass('updated');
+            });
+
+            // console.log(positions);
+
+            var url = "<?= route_to('reorder-subcategories') ?>";
+            $.getJSON(url, { positions: positions }, function (response) {
+                if ( response.status == 1) {
+                    subcategories_DT.ajax.reload(null, false);
+                    toastr.success(response.msg);
+                }
+            });
+        }
+    });
+
+
+    // Delete subcategories
+    $(document).on('click', '.deleteSubcategoryBtn', function (e) {
+        e.preventDefault();
+        var subcategory_id = $(this).data('id');
+        var url = "<?= route_to('delete-subcategory') ?>";
+        swal.fire({
+            title: 'Are you sure?',
+            html: 'Do you want to delete this subcategory?',
+            showCloseButton: true,
+            showCancelButton: true,
+            cancelButtonText: 'Cancel',
+            confirmButtonText: 'Yes, delete',
+            cancelButtonColor: '#D33',
+            confirmButtonColor: '#3085D6',
+            width: 360,
+            allowOutsideClick: false
+        }).then(function (result) {
+            if (result.value) {
+                $.getJSON(url, { subcategory_id: subcategory_id }, function (response) {
+                    if ( response.status == 1) {
+                        subcategories_DT.ajax.reload(null, false);
+                        categories_DT.ajax.reload(null, false);
+                        toastr.success(response.msg);
+                    } else {
+                        toastr.error(response.msg);
+                    }
+                });
+            }
+        });
     });
 
 </script>
